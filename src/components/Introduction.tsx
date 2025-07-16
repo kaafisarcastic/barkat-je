@@ -43,7 +43,7 @@ function Introduction() {
 
       <div className="flex flex-col sm:flex-row justify-center gap-4 px-4 sm:px-0 py-10 sm:py-20">
         <button
-          className="w-full sm:w-auto px-6 py-3 bg-white/20 backdrop-blur-md text-black rounded-md shadow border border-white/30 hover:bg-[#e94e4e] transition"
+          className="w-full  sm:w-auto px-6 py-3 bg-white/20 backdrop-blur-md text-black rounded-md shadow border border-[#000000] hover:bg-[#e94e4e] transition"
           onClick={handleReadRules}
         >
           Read Rules

@@ -135,10 +135,10 @@ export default function QuestionnairePage() {
     if (questions[currentIndex].options?.length > 0) {
       if (!response.selected_option || !response.explanation) return false;
       const len = response.explanation.trim().length;
-      if (len < 100 || len > 400) return false;
+      if (len < 20 || len > 100) return false;
     } else {
       const len = response.explanation?.trim().length || 0;
-      if (len < 100 || len > 400) return false;
+      if (len < 20 || len > 100) return false;
     }
 
     return true;
@@ -146,7 +146,7 @@ export default function QuestionnairePage() {
 
   const handleNext = () => {
     if (!validateResponse()) {
-      alert("Please complete the response with 100-400 characters.");
+      alert("Please complete the response with 20-100 characters.");
       return;
     }
     if (currentIndex < questions.length - 1) setCurrentIndex(currentIndex + 1);
@@ -158,7 +158,7 @@ export default function QuestionnairePage() {
 
   const handleSubmit = async () => {
     if (!validateResponse()) {
-      alert("Please complete the response with 100-400 characters.");
+      alert("Please complete the response with 20-100 characters.");
       return;
     }
 
@@ -273,7 +273,7 @@ export default function QuestionnairePage() {
                 required
               />
               <p className="text-sm text-gray-500 mt-1">
-                Minimum 100 and maximum 400 characters
+                Minimum 20 and maximum 100 characters
               </p>
             </div>
           )}

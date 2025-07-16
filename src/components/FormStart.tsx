@@ -21,6 +21,7 @@ function FormStart() {
   const [inviteId, setInviteId] = useState("");
   const [testToken, setTestToken] = useState(""); // second userId
   const [user1, setUser1] = useState(""); // first userId
+  const [testLink, setTestLink] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -31,20 +32,18 @@ function FormStart() {
     setSubmitted(true);
     setOtpSent(false);
     setVerifyStatus("");
+
     try {
       const res = await fetch("/api/send-otp", {
         method: "POST",
         body: JSON.stringify(form),
         headers: { "Content-Type": "application/json" },
       });
+
       if (res.ok) {
         setOtpSent(true);
         setTimer(180);
         setResendTimer(60);
-        intervalRef.current = setInterval(() => {
-          setTimer((t) => (t > 0 ? t - 1 : 0));
-          setResendTimer((r) => (r > 0 ? r - 1 : 0));
-        }, 1000);
       } else {
         setVerifyStatus("Failed to send OTP. Try again.");
       }
@@ -91,10 +90,9 @@ function FormStart() {
           body: JSON.stringify({ userId: userId2 }),
         });
 
-        // Set state
         setInviteId(String(sharedInviteId));
-        setTestToken(String(userId2)); // for second user (link)
-        setUser1(String(userId1)); // for first user (Start button)
+        setUser1(String(userId1));
+        setTestToken(String(userId2));
       } else {
         setVerifyStatus("Invalid OTP or expired.");
       }
@@ -114,6 +112,8 @@ function FormStart() {
       if (res.ok) {
         setResendTimer(60);
         setOtpSent(true);
+        setTimer(180);
+        setOtp("");
         setVerifyStatus("OTP resent!");
       } else {
         setVerifyStatus("Failed to resend OTP.");
@@ -123,82 +123,82 @@ function FormStart() {
     }
   };
 
+  // Set up countdown timer
   useEffect(() => {
-    if (timer === 0 && intervalRef.current) {
-      clearInterval(intervalRef.current);
+    if (otpSent) {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+
+      intervalRef.current = setInterval(() => {
+        setTimer((t) => (t > 0 ? t - 1 : 0));
+        setResendTimer((r) => (r > 0 ? r - 1 : 0));
+      }, 1000);
     }
+
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+  }, [otpSent]);
+
+  // Invalidate OTP on expiry
+  useEffect(() => {
+    if (timer === 0) {
+      setOtp("");
+      setOtpSent(false);
+      setVerifyStatus("OTP expired. Please resend.");
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
   }, [timer]);
 
-  const testLink = `${window.location.origin}/partner?inviteId=${inviteId}&userId=${testToken}`;
+  // Build test link when ready
+  useEffect(() => {
+    if (inviteId && testToken && typeof window !== "undefined") {
+      setTestLink(
+        `${window.location.origin}/partner?inviteId=${inviteId}&userId=${testToken}`
+      );
+    }
+  }, [inviteId, testToken]);
 
   return (
     <section className="bg-[#ffffff] rounded-2xl w-full py-16">
       <div className="max-w-2xl text-center mx-auto px-6 py-8 bg-white rounded-2xl shadow">
         <RevealTextwithWipe delay={0.2}>
-          <h1 className="text-[#000000] font-inter text-2xl  mb-6">
+          <h1 className="text-[#000000] font-inter text-2xl mb-6">
             Who's taking the test?
           </h1>
         </RevealTextwithWipe>
+
         {!submitted ? (
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-label text-[#999999] text-sm mb-1 text-left font-inter">
-                Your Name
-              </label>
-              <input
-                type="text"
-                name="yourName"
-                value={form.yourName}
-                onChange={handleChange}
-                required
-                className="w-full px-4 text-black py-2 border border-[#ededed] rounded-[6px] font-inter text-base bg-[#f9f9f9] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-label text-[#999999] text-sm mb-1 text-left font-inter">
-                Your Email
-              </label>
-              <input
-                type="email"
-                name="yourEmail"
-                value={form.yourEmail}
-                onChange={handleChange}
-                required
-                className="w-full px-4 text-black py-2 border border-[#ededed] rounded-[6px] font-inter text-base bg-[#f9f9f9] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-label text-[#999999] text-sm mb-1 text-left font-inter">
-                Partner's Name
-              </label>
-              <input
-                type="text"
-                name="partnerName"
-                value={form.partnerName}
-                onChange={handleChange}
-                required
-                className="w-full text-black px-4 py-2 border border-[#ededed] rounded-[6px] font-inter text-base bg-[#f9f9f9] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-label text-[#999999] text-sm mb-1 text-left font-inter">
-                Partner's Email
-              </label>
-              <input
-                type="email"
-                name="partnerEmail"
-                value={form.partnerEmail}
-                onChange={handleChange}
-                required
-                className="w-full px-4 text-black py-2 border border-[#ededed] rounded-[6px] font-inter text-base bg-[#f9f9f9] focus:outline-none"
-              />
-            </div>
+            {["yourName", "yourEmail", "partnerName", "partnerEmail"].map(
+              (field, idx) => (
+                <div key={field}>
+                  <label className="block text-sm text-[#999999] font-inter mb-1 text-left">
+                    {
+                      [
+                        "Your Name",
+                        "Your Email",
+                        "Partner's Name",
+                        "Partner's Email",
+                      ][idx]
+                    }
+                  </label>
+                  <input
+                    type={field.includes("Email") ? "email" : "text"}
+                    name={field}
+                    value={form[field as keyof typeof form]}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-2 border border-[#ededed] rounded-[6px] text-black font-inter text-base bg-[#f9f9f9] focus:outline-[#E94E4E]"
+                  />
+                </div>
+              )
+            )}
             <button
               type="submit"
-              className="w-full h-12 bg-black text-white rounded-[6px] font-inter text-base transition-colors duration-200 hover:bg-[#E94E4E] mt-4"
+              className="w-full h-12 bg-black text-white rounded-[6px] font-inter text-base hover:bg-[#E94E4E] transition-colors mt-4"
             >
               Generate Invite
             </button>
@@ -217,14 +217,14 @@ function FormStart() {
               placeholder="Enter OTP"
             />
             <button
-              className="w-full h-12 bg-black text-white rounded-[6px] font-inter font-semibold text-base transition-colors duration-200 hover:bg-[#E94E4E]"
+              className="w-full h-12 bg-black text-white rounded-[6px] font-inter text-base hover:bg-[#E94E4E] transition-colors"
               onClick={handleVerify}
               disabled={timer === 0}
             >
               Verify OTP ({timer}s left)
             </button>
             <button
-              className="border border-black text-black rounded-[6px] px-4 py-2 font-inter font-semibold text-base transition-colors duration-200 hover:text-[#E94E4E] hover:border-[#E94E4E] bg-white"
+              className="w-full border border-black text-black rounded-[6px] px-4 py-2 font-inter text-base hover:text-[#E94E4E] hover:border-[#E94E4E] transition-colors bg-white"
               onClick={handleResend}
               disabled={resendTimer > 0}
             >
@@ -233,32 +233,33 @@ function FormStart() {
             <div className="text-red-500">{verifyStatus}</div>
           </div>
         ) : (
-          <div>Sending OTP...</div>
+          <div className="text-gray-500">Sending OTP...</div>
         )}
+
         {verifyStatus === "Verified!" && (
-          <div className="text-black space-y-4">
+          <div className="text-black space-y-4 mt-6">
             <div className="font-inter text-base text-[#555555]">
               Your test link:
             </div>
-            <div className="bg-[#f9f9f9] border px-4 py-2 rounded font-mono break-all overflow-x-auto max-w-full">
+            <div className="bg-[#f9f9f9] border px-4 py-2 rounded font-mono break-all overflow-x-auto">
               {testLink}
             </div>
-            <div className="text-black flex gap-2 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               <button
-                className="border border-black text-black rounded-[6px] px-4 py-2 font-inter font-semibold text-base transition-colors duration-200 hover:text-[#E94E4E] hover:border-[#E94E4E] bg-white"
+                className="border border-black text-black rounded-[6px] px-4 py-2 font-inter text-base hover:text-[#E94E4E] hover:border-[#E94E4E] transition-colors bg-white"
                 onClick={() => navigator.clipboard.writeText(testLink)}
               >
                 Copy Link
               </button>
               <button
-                className="border border-black text-black rounded-[6px] px-4 py-2 font-inter font-semibold text-base transition-colors duration-200 hover:text-[#E94E4E] hover:border-[#E94E4E] bg-white"
+                className="border border-black text-black rounded-[6px] px-4 py-2 font-inter text-base hover:text-[#E94E4E] hover:border-[#E94E4E] transition-colors bg-white"
                 onClick={handleResend}
                 disabled={resendTimer > 0}
               >
                 Resend Invite {resendTimer > 0 ? `(${resendTimer}s)` : ""}
               </button>
               <button
-                className="w-full h-12 bg-black text-white rounded-[6px] font-inter font-semibold text-base transition-colors duration-200 hover:bg-[#E94E4E]"
+                className="w-full h-12 bg-black text-white rounded-[6px] font-inter text-base hover:bg-[#E94E4E] transition-colors"
                 onClick={() =>
                   router.push(`/test?inviteId=${inviteId}&userId=${user1}`)
                 }

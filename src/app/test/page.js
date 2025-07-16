@@ -7,28 +7,35 @@ export default function QuestionnairePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { inviteId, token } = useParams();
-  const [invite, setinvite] = useState("");
+  const [invite, setInvite] = useState("");
 
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [responses, setResponses] = useState({});
   const [loading, setLoading] = useState(true);
 
+  const segments = [
+    { title: "Family Expectations", range: [1, 5] },
+    { title: "Finances", range: [6, 10] },
+    { title: "Lifestyle", range: [11, 15] },
+    { title: "Children & Parenting", range: [16, 20] },
+    { title: "Religion & Culture", range: [21, 25] },
+    { title: "Career", range: [26, 30] },
+    { title: "Communication", range: [31, 35] },
+    { title: "Health & Well-being", range: [36, 40] },
+    { title: "Emergency Planning", range: [51, 55] },
+    { title: "Future Planning", range: [56, 60] },
+  ];
+
   useEffect(() => {
     const inviteId = searchParams.get("inviteId");
     const userId = searchParams.get("userId");
-    console.log("Invite ID:", inviteId);
-    console.log("User ID:", userId);
-    setinvite(inviteId);
+    setInvite(inviteId);
   }, [searchParams]);
 
   useEffect(() => {
     const inviteId = searchParams.get("inviteId");
-
     const userId = searchParams.get("userId");
-
-    console.log("Invite ID:", inviteId);
-    console.log("User ID:", userId);
 
     if (inviteId && userId) {
       const saveUserInfo = async () => {
@@ -38,18 +45,12 @@ export default function QuestionnairePage() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              userId, // assuming this is a number
-            }),
+            body: JSON.stringify({ userId }),
           });
 
           const data = await res.json();
-
-          if (!res.ok) {
-            console.error("Failed to save user info:", data);
-          } else {
-            console.log("User info saved successfully");
-          }
+          if (!res.ok) console.error("Failed to save user info:", data);
+          else console.log("User info saved successfully");
         } catch (error) {
           console.error("Error saving user info:", error);
         }
@@ -99,21 +100,23 @@ export default function QuestionnairePage() {
     const response = responses[questions[currentIndex].id];
     if (!response) return false;
 
-    if (questions[currentIndex].options?.length > 0) {
-      if (!response.selected_option || !response.explanation) return false;
-      const len = response.explanation.trim().length;
-      if (len < 100 || len > 400) return false;
-    } else {
-      const len = response.explanation?.trim().length || 0;
-      if (len < 100 || len > 400) return false;
-    }
+    const hasOptions = questions[currentIndex].options?.length > 0;
+    const explanationLength = response.explanation?.trim().length || 0;
 
-    return true;
+    if (hasOptions) {
+      return (
+        response.selected_option &&
+        explanationLength >= 20 &&
+        explanationLength <= 100
+      );
+    } else {
+      return explanationLength >= 100 && explanationLength <= 400;
+    }
   };
 
   const handleNext = () => {
     if (!validateResponse()) {
-      alert("Please complete the response with 100-400 characters.");
+      alert("Please complete the response with the required characters.");
       return;
     }
     if (currentIndex < questions.length - 1) setCurrentIndex(currentIndex + 1);
@@ -125,7 +128,7 @@ export default function QuestionnairePage() {
 
   const handleSubmit = async () => {
     if (!validateResponse()) {
-      alert("Please complete the response with 100-400 characters.");
+      alert("Please complete the response with the required characters.");
       return;
     }
 
@@ -179,27 +182,60 @@ export default function QuestionnairePage() {
   const hasOptions = currentQuestion.options?.length > 0;
   const progress = Math.round(((currentIndex + 1) / questions.length) * 100);
 
+  const currentSegment =
+    segments.find(
+      (seg) =>
+        currentQuestion.id >= seg.range[0] && currentQuestion.id <= seg.range[1]
+    )?.title || "General";
+
   return (
-    <section className="rounded-2xl bg-[#ffffff] w-full py-12">
+    <section className="rounded-2xl bg-white w-full py-12">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <h1 className="text-black font-sanserif text-5xl md:text-7xl leading-tight">
           Know Your Partner Before Marriage
         </h1>
         <p className="text-[#555555] font-sanserif text-base mt-4">
-          Welcome to the compatibility test. Tool that helps couples explore
-          core areas of their relationship before marriage.
+          A tool that helps couples explore core areas of their relationship
+          before marriage.
         </p>
 
-        <div className="mt-12 bg-white/20 backdrop-blur-md p-6 rounded-xl shadow border border-white/30">
+        {/* Stepper */}
+        <div className="flex overflow-x-auto gap-4 mb-8 scrollbar-hide mt-8 pb-2">
+          {segments.map((seg, index) => {
+            const isActive =
+              currentQuestion.id >= seg.range[0] &&
+              currentQuestion.id <= seg.range[1];
+            return (
+              <div
+                key={index}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium border transition 
+                  ${
+                    isActive
+                      ? "bg-black text-white border-black"
+                      : "bg-white text-gray-500 border-gray-300"
+                  }`}
+              >
+                {seg.title}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Question Card */}
+        <div className="bg-white/20 backdrop-blur-md p-6 rounded-xl shadow border border-white/30">
           {/* Top Bar */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-sm text-gray-600">
               Question {currentIndex + 1} of {questions.length}
             </span>
-            <span className="text-sm bg-[#066006] text-white px-3 py-1 rounded-full">
+            <span className="text-sm bg-[#FDECEC] text-[#E94E4E] px-3 py-1 rounded-full">
               {progress}% Complete
             </span>
           </div>
+
+          <p className="text-gray-500 text-sm mb-2 font-medium">
+            Segment: {currentSegment}
+          </p>
 
           {/* Question */}
           <h2 className="text-xl font-semibold mb-4 text-black">
@@ -224,7 +260,7 @@ export default function QuestionnairePage() {
             </div>
           )}
 
-          {/* Explanation */}
+          {/* Explanation for MCQ */}
           {hasOptions && qResponse.selected_option && (
             <div className="mb-4">
               <label className="block text-sm text-gray-600 mb-1">
@@ -240,12 +276,12 @@ export default function QuestionnairePage() {
                 required
               />
               <p className="text-sm text-gray-500 mt-1">
-                Minimum 100 and maximum 400 characters
+                Minimum 20 and Maximum 100 characters
               </p>
             </div>
           )}
 
-          {/* Text-only question */}
+          {/* Open-ended */}
           {!hasOptions && (
             <div className="mb-4">
               <label className="block text-sm text-gray-600 mb-1">
@@ -266,7 +302,7 @@ export default function QuestionnairePage() {
             </div>
           )}
 
-          {/* Navigation */}
+          {/* Navigation Buttons */}
           <div className="flex justify-between pt-4">
             <button
               onClick={handleBack}

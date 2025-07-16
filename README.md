@@ -1,3 +1,7 @@
+# barkat-app
+
+An app for the potential partner to know about each other before saying "I do" , this app also gives summary of their answers.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

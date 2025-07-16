@@ -39,32 +39,15 @@ function AnalysisPage() {
         }
       }
 
-      const prompt = `Ananalyse questions  and answers and give me report like this:
-Header:
-Your Compatibility Report
-Section: Qualitative Insights
-AI Counsel Summary
-Strengths: You both value transparency and shared decision-making.
+      const prompt = `Ananalyse questions  and their answers and give me summary on these:
 
-Friction Points: You differ on dowry expectations and family visits.
+      1. Overall summary of compatibility with my partners response
+      2.Strengths 
+      3.Top 5 Risks to Discuss based on our answers 
+      4. Suggest some conversation starter
+      5. Discuss some points over coffee
 
-Top 5 Risks to Discuss:
 
-Financial transparency
-Frequency of family visits
-Post-marriage living arrangements
-Career vs. family balance
-Holiday celebration scale
-
-Section: Conversation Starters
-“Let’s map our monthly budget together.”
-“Can we agree on how often we’ll visit extended family?”
-“What does a perfect work-life balance look like for us?”
-
-CTA Button:
-Discuss These Points Over Coffee
-
-User responses:
 ${allText}`;
 
       const geminiRes = await fetch("/api/gemini", {

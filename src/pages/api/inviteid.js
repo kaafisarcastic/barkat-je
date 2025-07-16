@@ -25,7 +25,9 @@ export default async function handler(req, res) {
   try {
     const connection = await mysql.createConnection(dbConfig);
 
-    await connection.execute("INSERT INTO invites (id) VALUES (?)", [inviteId]);
+    await connection.execute("INSERT IGNORE INTO invites (id) VALUES (?)", [
+      inviteId,
+    ]);
 
     await connection.end();
 
