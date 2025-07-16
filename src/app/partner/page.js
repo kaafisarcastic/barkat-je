@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 
-export default function QuestionnairePage() {
+export default function QuestionnairePagePartner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { inviteId, token } = useParams();
